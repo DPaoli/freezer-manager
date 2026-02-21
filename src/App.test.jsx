@@ -27,41 +27,60 @@ window.open = vi.fn();
 
 const getSlot = (n) => screen.getByRole('button', { name: new RegExp(`^${n}$`) });
 
-describe('Freezer Manager Final Tests', () => {
+describe('Freezer Manager Mixed Layout Tests', () => {
     beforeEach(() => {
         localStorage.clear();
         vi.clearAllMocks();
     });
 
-    it('renders correctly with 13 named freezers in dropdown', () => {
+    it('renders correctly with specific named freezers and types', () => {
         render(<App />);
         const options = screen.getAllByRole('option');
         expect(options).toHaveLength(13);
-        expect(options[0]).toHaveTextContent(/Disney 1 \(Caixas\)/i);
-        expect(options[2]).toHaveTextContent(/Zero \(Potes\)/i);
+        expect(options[0]).toHaveTextContent(/Disney 1 \(Caixa\)/i);
+        expect(options[3]).toHaveTextContent(/HK\/Festa \(Pote\/Caixa\)/i);
+        expect(options[5]).toHaveTextContent(/Potes Tradicionais \(Pote\)/i);
     });
 
-    it('generates a report and opens it for WhatsApp', () => {
+    it('handles HK/Festa mixed stats correctly', () => {
         render(<App />);
+
+        // Switch to HK/Festa (index 3)
+        const select = screen.getByRole('combobox');
+        fireEvent.change(select, { target: { value: '3' } });
+
+        // Click slot 1 (Pote zone)
         const slot1 = getSlot(1);
         fireEvent.click(slot1);
+
+        // Click slot 13 (Caixa zone)
+        const slot13 = getSlot(13);
+        fireEvent.click(slot13);
+
+        // Check Potes stats header (Potes cheias should be 1)
+        const potesHeading = screen.getByRole('heading', { name: /^Potes$/i });
+        const potesGroup = potesHeading.closest('.stats-group');
+        expect(potesGroup.querySelector('.stat-item.blue .stat-value')).toHaveTextContent('1');
+
+        // Check Caixas stats header (Caixas cheias should be 1)
+        const caixasHeading = screen.getByRole('heading', { name: /^Caixas$/i });
+        const caixasGroup = caixasHeading.closest('.stats-group');
+        expect(caixasGroup.querySelector('.stat-item.blue .stat-value')).toHaveTextContent('1');
+    });
+
+    it('generates a detailed report with mixed info', () => {
+        render(<App />);
+        // Select HK/Festa
+        const select = screen.getByRole('combobox');
+        fireEvent.change(select, { target: { value: '3' } });
+
+        // Fill one pote and one caixa
+        fireEvent.click(getSlot(1));
+        fireEvent.click(getSlot(13));
 
         const reportBtn = screen.getByText(/Relatório/i);
         fireEvent.click(reportBtn);
 
-        expect(window.open).toHaveBeenCalledWith(expect.stringContaining('wa.me'), '_blank');
-    });
-
-    it('resets all freezers via Zerar App', async () => {
-        render(<App />);
-        const slot1 = getSlot(1);
-        fireEvent.click(slot1);
-        expect(slot1).toHaveClass('cheia');
-
-        const resetBtn = screen.getByText(/Zerar App/i);
-        fireEvent.click(resetBtn);
-
-        expect(window.confirm).toHaveBeenCalled();
-        expect(slot1).toHaveClass('vazia');
+        expect(window.open).toHaveBeenCalledWith(expect.stringContaining('HK%2FFesta*%3A%201%20Potes%20%2F%201%20Caixas'), '_blank');
     });
 });

@@ -91,8 +91,31 @@ h1 {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.btn-report:active {
-  background: #128C7E;
+/* Mixed Layout Zones */
+.slot.pote-zone {
+  border: 1px dashed rgba(0, 0, 0, 0.2);
+}
+
+.slot.caixa-zone {
+  border: 1px double rgba(0, 0, 0, 0.3);
+}
+
+.slot.pote-zone::after {
+  content: 'P';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 8px;
+  opacity: 0.3;
+}
+
+.slot.caixa-zone::after {
+  content: 'C';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 8px;
+  opacity: 0.3;
 }
 
 .selector-container {
