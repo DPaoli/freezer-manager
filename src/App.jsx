@@ -57,19 +57,22 @@ function App() {
     data.forEach((freezerData, i) => {
       const config = FREEZER_CONFIG[i];
       const cheios = freezerData.filter(s => s).length;
+      const vazios = SLOTS_PER_FREEZER - cheios;
 
-      if (cheios > 0) {
-        if (config.type === 'Metade') {
-          const potesPart = freezerData.slice(0, 12).filter(s => s).length;
-          const caixasPart = freezerData.slice(12, 24).filter(s => s).length;
-          report += `*${config.name}*: ${potesPart} Potes / ${caixasPart} Caixas\n`;
-          potesTotal += potesPart;
-          caixasTotal += caixasPart;
-        } else {
-          report += `*${config.name}* (${config.type}): ${cheios} cheios\n`;
-          if (config.type === 'Pote') potesTotal += cheios;
-          else caixasTotal += cheios;
-        }
+      if (config.type === 'Metade') {
+        const pCheios = freezerData.slice(0, 12).filter(s => s).length;
+        const pVazios = 12 - pCheios;
+        const cCheios = freezerData.slice(12, 24).filter(s => s).length;
+        const cVazios = 12 - cCheios;
+        report += `*${config.name}*:\n  - Potes: ${pCheios} cheios, ${pVazios} vazios\n  - Caixas: ${cCheios} cheias, ${cVazios} vazias\n`;
+        potesTotal += pCheios;
+        caixasTotal += cCheios;
+      } else {
+        const labelCheio = config.type === 'Pote' ? 'cheios' : 'cheias';
+        const labelVazio = config.type === 'Pote' ? 'vazios' : 'vazias';
+        report += `*${config.name}* (${config.type}): ${cheios} ${labelCheio}, ${vazios} ${labelVazio}\n`;
+        if (config.type === 'Pote') potesTotal += cheios;
+        else caixasTotal += cheios;
       }
     });
 

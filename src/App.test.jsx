@@ -81,7 +81,7 @@ describe('Freezer Manager Mixed Layout Tests', () => {
         const reportBtn = screen.getByText(/Relatório/i);
         fireEvent.click(reportBtn);
 
-        expect(window.open).toHaveBeenCalledWith(expect.stringContaining('HK%2FFesta*%3A%201%20Potes%20%2F%201%20Caixas'), '_blank');
+        expect(window.open).toHaveBeenCalledWith(expect.stringContaining('HK%2FFesta*%3A%0A%20%20-%20Potes%3A%201%20cheios%2C%2011%20vazios'), '_blank');
     });
 
     it('resets all freezers via Limpar Tudo', async () => {
