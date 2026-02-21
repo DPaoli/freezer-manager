@@ -4,9 +4,15 @@ import './index.css';
 const FREEZER_COUNT = 13;
 const SLOTS_PER_FREEZER = 24;
 
-const FREEZER_CONFIG = Array(FREEZER_COUNT).fill(null).map((_, i) => ({
+const FREEZER_NAMES = [
+  "Disney 1", "Disney 2", "Zero", "HeK/Festa", "Frutos",
+  "Potes Tradicionais", "Cones/Açai/TopS", "Duetto", "Delicia",
+  "Seleções", "Fazenda", "Netflix", "Sensa"
+];
+
+const FREEZER_CONFIG = FREEZER_NAMES.map((name, i) => ({
   id: i,
-  name: `Freezer ${i + 1}`,
+  name: name,
   type: i === 0 ? 'Caixas' : 'Potes',
   cols: i === 0 ? 8 : 6,
   rows: i === 0 ? 3 : 4,
@@ -15,7 +21,7 @@ const FREEZER_CONFIG = Array(FREEZER_COUNT).fill(null).map((_, i) => ({
 function App() {
   const [activeFreezer, setActiveFreezer] = useState(0);
   const [data, setData] = useState(() => {
-    const saved = localStorage.getItem('freezer_data_v2'); // New version for 24 slots
+    const saved = localStorage.getItem('freezer_data_v2');
     if (saved) return JSON.parse(saved);
     return Array(FREEZER_COUNT).fill(null).map(() => Array(SLOTS_PER_FREEZER).fill(false));
   });
@@ -35,12 +41,34 @@ function App() {
     }
   };
 
-  const clearCurrent = () => {
-    if (window.confirm('Tem certeza que deseja limpar este freezer?')) {
-      const newData = [...data];
-      newData[activeFreezer] = Array(SLOTS_PER_FREEZER).fill(false);
-      setData(newData);
+  const clearAll = () => {
+    if (window.confirm('ATENÇÃO: Isso irá zerar TODOS os freezeres (Potes e Caixas). Prosseguir?')) {
+      setData(Array(FREEZER_COUNT).fill(null).map(() => Array(SLOTS_PER_FREEZER).fill(false)));
     }
+  };
+
+  const generateReport = () => {
+    let report = "*RELATÓRIO DE FREEZERES*\n\n";
+    let potesTotal = 0;
+    let caixasTotal = 0;
+
+    data.forEach((freezerData, i) => {
+      const config = FREEZER_CONFIG[i];
+      const cheios = freezerData.filter(s => s).length;
+      if (cheios > 0) {
+        report += `*${config.name}* (${config.type}): ${cheios} cheios, ${SLOTS_PER_FREEZER - cheios} vazios\n`;
+      }
+      if (config.type === 'Potes') potesTotal += cheios;
+      else caixasTotal += cheios;
+    });
+
+    report += `\n*RESUMO TOTAL:*\nPotes Cheios: ${potesTotal}\nCaixas Cheias: ${caixasTotal}`;
+    return encodeURIComponent(report);
+  };
+
+  const handleWhatsApp = () => {
+    const message = generateReport();
+    window.open(`https://wa.me/?text=${message}`, '_blank');
   };
 
   const getStats = () => {
@@ -71,8 +99,11 @@ function App() {
     <>
       <header>
         <div className="header-top">
-          <h1>Freezers</h1>
-          <button className="btn-clear" onClick={clearCurrent}>Limpar</button>
+          <h1>Freezer App</h1>
+          <div className="header-btns">
+            <button className="btn-clear secondary" onClick={clearAll}>Zerar App</button>
+            <button className="btn-report" onClick={handleWhatsApp}>Relatório</button>
+          </div>
         </div>
         <div className="selector-container">
           <select

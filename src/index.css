@@ -49,6 +49,11 @@ header {
   align-items: center;
 }
 
+.header-btns {
+  display: flex;
+  gap: 8px;
+}
+
 h1 {
   margin: 0;
   font-size: 24px;
@@ -59,17 +64,35 @@ h1 {
 .btn-clear {
   background: #e5e5ea;
   border: none;
-  padding: 6px 12px;
+  padding: 8px 12px;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--ios-red);
   cursor: pointer;
-  transition: background 0.2s;
 }
 
-.btn-clear:active {
-  background: #d1d1d6;
+.btn-clear.secondary {
+  color: var(--ios-secondary-text);
+  background: transparent;
+  padding: 8px 0;
+}
+
+.btn-report {
+  background: #25D366;
+  /* WhatsApp Green */
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-report:active {
+  background: #128C7E;
 }
 
 .selector-container {
