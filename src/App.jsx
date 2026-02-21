@@ -125,7 +125,7 @@ function App() {
         <div className="header-top">
           <h1>Freezer App</h1>
           <div className="header-btns">
-            <button className="btn-clear secondary" onClick={clearAll}>Zerar App</button>
+            <button className="btn-clear secondary" onClick={clearAll}>Limpar Tudo</button>
             <button className="btn-report" onClick={handleWhatsApp}>Relatório</button>
           </div>
         </div>

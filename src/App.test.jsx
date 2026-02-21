@@ -83,4 +83,24 @@ describe('Freezer Manager Mixed Layout Tests', () => {
 
         expect(window.open).toHaveBeenCalledWith(expect.stringContaining('HK%2FFesta*%3A%201%20Potes%20%2F%201%20Caixas'), '_blank');
     });
+
+    it('resets all freezers via Limpar Tudo', async () => {
+        render(<App />);
+        const slot1 = getSlot(1);
+        fireEvent.click(slot1);
+        expect(slot1).toHaveClass('cheia');
+
+        // Confirm stats are greater than 0
+        const caixasGroup = screen.getByRole('heading', { name: /^Caixas$/i }).closest('.stats-group');
+        expect(caixasGroup.querySelector('.stat-item.blue .stat-value')).toHaveTextContent('1');
+
+        const resetBtn = screen.getByText(/Limpar Tudo/i);
+        fireEvent.click(resetBtn);
+
+        expect(window.confirm).toHaveBeenCalled();
+        expect(slot1).toHaveClass('vazia');
+
+        // Confirm stats are back to 0
+        expect(caixasGroup.querySelector('.stat-item.blue .stat-value')).toHaveTextContent('0');
+    });
 });
