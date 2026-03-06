@@ -158,11 +158,11 @@ h1 {
   flex: 1;
   padding: 16px;
   display: grid;
-  grid-template-columns: repeat(var(--cols), 1fr);
-  grid-template-rows: repeat(var(--rows), 1fr);
+  grid-template-columns: repeat(var(--cols), 40px);
+  grid-auto-rows: 40px;
+  justify-content: center;
   gap: 6px;
   width: 100%;
-  max-width: 500px;
   margin: 0 auto;
   align-content: start;
 }
