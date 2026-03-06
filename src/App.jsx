@@ -23,13 +23,44 @@ const FREEZER_CONFIG = [
 function App() {
   const [activeFreezer, setActiveFreezer] = useState(0);
   const [data, setData] = useState(() => {
-    const saved = localStorage.getItem('freezer_data_v2');
-    if (saved) return JSON.parse(saved);
-    return Array(FREEZER_COUNT).fill(null).map(() => Array(SLOTS_PER_FREEZER).fill(false));
+    const savedV4 = localStorage.getItem('freezer_data_v4');
+    if (savedV4) return JSON.parse(savedV4);
+
+    const savedV3 = localStorage.getItem('freezer_data_v3');
+    const parsedV3 = savedV3 ? JSON.parse(savedV3) : null;
+
+    const savedV2 = localStorage.getItem('freezer_data_v2');
+    const parsedV2 = savedV2 ? JSON.parse(savedV2) : null;
+
+    return FREEZER_CONFIG.map((config, i) => {
+      let totalSlots = 24;
+      if (config.type === 'Caixa') totalSlots = 54;
+      if (config.type === 'Pote') totalSlots = 40;
+
+      const slots = Array(totalSlots).fill(false);
+
+      if (parsedV3 && parsedV3[i]) {
+        for (let j = 0; j < Math.min(parsedV3[i].length, totalSlots); j++) {
+          slots[j] = parsedV3[i][j];
+        }
+      } else if (parsedV2 && parsedV2[i]) {
+        if (config.type === 'Caixa') {
+          // Old data (24 slots) mapped to Parte de Baixo (indices 30 to 53)
+          for (let j = 0; j < Math.min(parsedV2[i].length, 24); j++) {
+            slots[j + 30] = parsedV2[i][j];
+          }
+        } else {
+          for (let j = 0; j < Math.min(parsedV2[i].length, 24); j++) {
+            slots[j] = parsedV2[i][j];
+          }
+        }
+      }
+      return slots;
+    });
   });
 
   useEffect(() => {
-    localStorage.setItem('freezer_data_v2', JSON.stringify(data));
+    localStorage.setItem('freezer_data_v4', JSON.stringify(data));
   }, [data]);
 
   const toggleSlot = (index) => {
@@ -45,7 +76,12 @@ function App() {
 
   const clearAll = () => {
     if (window.confirm('ATENÇÃO: Isso irá zerar TODOS os freezeres. Prosseguir?')) {
-      setData(Array(FREEZER_COUNT).fill(null).map(() => Array(SLOTS_PER_FREEZER).fill(false)));
+      setData(FREEZER_CONFIG.map(config => {
+        let totalSlots = 24;
+        if (config.type === 'Caixa') totalSlots = 54;
+        if (config.type === 'Pote') totalSlots = 40;
+        return Array(totalSlots).fill(false);
+      }));
     }
   };
 
@@ -57,7 +93,6 @@ function App() {
     data.forEach((freezerData, i) => {
       const config = FREEZER_CONFIG[i];
       const cheios = freezerData.filter(s => s).length;
-      const vazios = SLOTS_PER_FREEZER - cheios;
 
       if (config.type === 'Metade') {
         const pCheios = freezerData.slice(0, 12).filter(s => s).length;
@@ -67,12 +102,23 @@ function App() {
         report += `*${config.name}*:\n  - Potes: ${pCheios} cheios, ${pVazios} vazios\n  - Caixas: ${cCheios} cheias, ${cVazios} vazias\n`;
         potesTotal += pCheios;
         caixasTotal += cCheios;
+      } else if (config.type === 'Caixa') {
+        const total = 54;
+        const vazios = total - cheios;
+        report += `*${config.name}* (${config.type}): ${cheios} cheias, ${vazios} vazias\n`;
+        caixasTotal += cheios;
+      } else if (config.type === 'Pote') {
+        const total = 40;
+        const vazios = total - cheios;
+        report += `*${config.name}* (${config.type}): ${cheios} cheios, ${vazios} vazios\n`;
+        potesTotal += cheios;
       } else {
+        const total = 24;
+        const vazios = total - cheios;
         const labelCheio = config.type === 'Pote' ? 'cheios' : 'cheias';
         const labelVazio = config.type === 'Pote' ? 'vazios' : 'vazias';
         report += `*${config.name}* (${config.type}): ${cheios} ${labelCheio}, ${vazios} ${labelVazio}\n`;
-        if (config.type === 'Pote') potesTotal += cheios;
-        else caixasTotal += cheios;
+        potesTotal += cheios;
       }
     });
 
@@ -103,15 +149,25 @@ function App() {
         potesVazios += (12 - pCheios);
         caixasCheias += cCheios;
         caixasVazias += (12 - cCheios);
-      } else {
+      } else if (config.type === 'Caixa') {
+        const total = 54;
         const cheios = freezerData.filter(s => s).length;
-        const vazios = SLOTS_PER_FREEZER - cheios;
+        caixasCheias += cheios;
+        caixasVazias += (total - cheios);
+      } else if (config.type === 'Pote') {
+        const total = 40;
+        const cheios = freezerData.filter(s => s).length;
+        potesCheios += cheios;
+        potesVazios += (total - cheios);
+      } else {
+        const total = 24;
+        const cheios = freezerData.filter(s => s).length;
         if (config.type === 'Pote') {
           potesCheios += cheios;
-          potesVazios += vazios;
+          potesVazios += (total - cheios);
         } else {
           caixasCheias += cheios;
-          caixasVazias += vazios;
+          caixasVazias += (total - cheios);
         }
       }
     });
@@ -147,20 +203,102 @@ function App() {
         </div>
       </header>
 
-      <div
-        className="grid-container"
-        style={{ '--cols': currentConfig.cols, '--rows': currentConfig.rows }}
-      >
-        {data[activeFreezer].map((isFull, i) => (
-          <button
-            key={i}
-            className={`slot ${isFull ? 'cheia' : 'vazia'} ${currentConfig.type === 'Metade' ? (i < 12 ? 'pote-zone' : 'caixa-zone') : ''}`}
-            onClick={() => toggleSlot(i)}
+      {currentConfig.type === 'Caixa' ? (
+        <div className="caixa-layout">
+          <h2 className="section-title">Parte de Cima</h2>
+          <div
+            className="grid-container"
+            style={{ '--cols': 10, '--rows': 3 }}
           >
-            {i + 1}
-          </button>
-        ))}
-      </div>
+            {data[activeFreezer].slice(0, 30).map((isFull, idx) => {
+              const actualIndex = idx;
+              return (
+                <button
+                  key={actualIndex}
+                  className={`slot ${isFull ? 'cheia' : 'vazia'}`}
+                  onClick={() => toggleSlot(actualIndex)}
+                >
+                  {actualIndex + 1}
+                </button>
+              );
+            })}
+          </div>
+
+          <h2 className="section-title">Parte de Baixo</h2>
+          <div
+            className="grid-container"
+            style={{ '--cols': currentConfig.cols, '--rows': currentConfig.rows }}
+          >
+            {data[activeFreezer].slice(30, 54).map((isFull, idx) => {
+              const actualIndex = idx + 30;
+              return (
+                <button
+                  key={actualIndex}
+                  className={`slot ${isFull ? 'cheia' : 'vazia'}`}
+                  onClick={() => toggleSlot(actualIndex)}
+                >
+                  {actualIndex + 1}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : currentConfig.type === 'Pote' ? (
+        <div className="caixa-layout">
+          <h2 className="section-title">Principal</h2>
+          <div
+            className="grid-container"
+            style={{ '--cols': currentConfig.cols, '--rows': currentConfig.rows }}
+          >
+            {data[activeFreezer].slice(0, 24).map((isFull, idx) => {
+              const actualIndex = idx;
+              return (
+                <button
+                  key={actualIndex}
+                  className={`slot ${isFull ? 'cheia' : 'vazia'}`}
+                  onClick={() => toggleSlot(actualIndex)}
+                >
+                  {actualIndex + 1}
+                </button>
+              );
+            })}
+          </div>
+
+          <h2 className="section-title">Motor</h2>
+          <div
+            className="grid-container"
+            style={{ '--cols': 8, '--rows': 2 }}
+          >
+            {data[activeFreezer].slice(24, 40).map((isFull, idx) => {
+              const actualIndex = idx + 24;
+              return (
+                <button
+                  key={actualIndex}
+                  className={`slot ${isFull ? 'cheia' : 'vazia'}`}
+                  onClick={() => toggleSlot(actualIndex)}
+                >
+                  {actualIndex + 1}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div
+          className="grid-container"
+          style={{ '--cols': currentConfig.cols, '--rows': currentConfig.rows }}
+        >
+          {data[activeFreezer].map((isFull, i) => (
+            <button
+              key={i}
+              className={`slot ${isFull ? 'cheia' : 'vazia'} ${currentConfig.type === 'Metade' ? (i < 12 ? 'pote-zone' : 'caixa-zone') : ''}`}
+              onClick={() => toggleSlot(i)}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="stats-container">
         <div className="stats-group">

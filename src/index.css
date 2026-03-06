@@ -118,6 +118,22 @@ h1 {
   opacity: 0.3;
 }
 
+.caixa-layout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.section-title {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ios-secondary-text);
+  margin: 16px 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .selector-container {
   width: 100%;
 }
