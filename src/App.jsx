@@ -267,7 +267,7 @@ function App() {
           <h2 className="section-title">Motor</h2>
           <div
             className="grid-container"
-            style={{ '--cols': 8, '--rows': 2 }}
+            style={{ '--cols': 4, '--rows': 4 }}
           >
             {data[activeFreezer].slice(24, 40).map((isFull, idx) => {
               const actualIndex = idx + 24;
